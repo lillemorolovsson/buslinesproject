@@ -10,25 +10,21 @@ import static dataprovider.TrafikLabbComm.TYPE;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import dataprovider.TrafikLabbComm.DataModelType;
 
 public final class BusLineDataJSONParser implements BusLineDataProvider {
 
-	public static final String cDirectionCode1 = "1";
-
 	/**
 	 * The external data is updated between 00.00 and 02.00 each day, we want to make sure that
 	 * we update after that. We can have old data for an extra hour, but not for a whole day.
 	 */
-	private static final int cHourAfterWhichToFetchUpdatedData = 3;
+	private static final int HOUR_AFTER_WHICH_TO_FETCH_FRESH_DATA = 3;
 
 	private LocalDateTime wasLastUpdated;
 	private final TrafikLabbComm externalDataProvider;
@@ -65,13 +61,13 @@ public final class BusLineDataJSONParser implements BusLineDataProvider {
 		Map<String, BusLineInformation> mapData = new HashMap<>();
 
 		System.out.println("Mapping of fetched data started " + LocalDateTime.now());
-		if (fetchedData == null || fetchedData.isEmpty()) {
+		if (fetchedData == null || fetchedData.optJSONObject(RESPONSE_DATA) == null) {
 			return mapData;
 		}
 
 		try {
-			JSONObject responseData =  (JSONObject) fetchedData.get(RESPONSE_DATA);
-			String modelType = (String) responseData.get(TYPE);
+			JSONObject responseData =  fetchedData.getJSONObject(RESPONSE_DATA);
+			String modelType = responseData.getString(TYPE);
 			switch (modelType) {
 				case DataModelType.JOUR_POINT_ON_LINE:
 					mapData = mapJourneyPattern(responseData);
@@ -116,7 +112,7 @@ public final class BusLineDataJSONParser implements BusLineDataProvider {
 	}
 
 	private void logExecutionTime(JSONObject fetchedData) {
-		Long execTime =  (Long) fetchedData.get(EXECUTION_TIME);
+		int execTime = fetchedData.optInt(EXECUTION_TIME);
 		System.out.println(LocalDateTime.now() + "Execution time for request was " + execTime);
 	}
 
@@ -124,27 +120,20 @@ public final class BusLineDataJSONParser implements BusLineDataProvider {
 
 		Map<String, BusLineInformation> mapData = new HashMap<>();
 
-		JSONArray result =  (JSONArray) responseData.get(RESULT);
-		Iterator<JSONObject> resultIterator = result.iterator();
+		JSONArray result = responseData.getJSONArray(RESULT);
 
-		while(resultIterator.hasNext()) {
+		for (int i = 0; i < result.length(); i++) {
 			try {
-				JSONObject item = resultIterator.next();
-				String lineNumber = (String) item.get(LINE_NUMBER);
-				BusLineInformation tInfo = mapData.get(lineNumber);
-				if (tInfo == null) {
-					tInfo = new BusLineInformation();
-					tInfo.lineNumber = lineNumber;
-					tInfo.busStopIdsDirection1 = new ArrayList<>();
-					tInfo.busStopIdsDirection2 = new ArrayList<>();
-					mapData.put(lineNumber, tInfo);
-				}
-				String directionCode = (String) item.get(DIRECTION_CODE);
-				if (directionCode.equals(cDirectionCode1)) {
-					tInfo.busStopIdsDirection1.add((String) item.get(JOUR_POINT_NUMBER));
+				JSONObject item = result.getJSONObject(i);
+				String lineNumber = item.getString(LINE_NUMBER);
+
+				BusLineInformation info = mapData.computeIfAbsent(lineNumber, missing -> new BusLineInformation(lineNumber));
+				String directionCode = item.getString(DIRECTION_CODE);
+				if (directionCode.equals(TrafikLabbComm.DIRECTION_CODE_1)) {
+					info.busStopIdsDirection1.add(item.getString(JOUR_POINT_NUMBER));
 				}
 				else {
-					tInfo.busStopIdsDirection2.add((String) item.get(JOUR_POINT_NUMBER));
+					info.busStopIdsDirection2.add(item.getString(JOUR_POINT_NUMBER));
 				}
 			}
 			catch (RuntimeException e ) {
@@ -173,7 +162,7 @@ public final class BusLineDataJSONParser implements BusLineDataProvider {
 
 		//if it was last updated previous day -- update if current time is later than 03.00
 		if (wasUpdatedDate.compareTo(today) < 0 &&
-			getCurrentTime().getHour() > cHourAfterWhichToFetchUpdatedData) {
+			getCurrentTime().getHour() > HOUR_AFTER_WHICH_TO_FETCH_FRESH_DATA) {
 			return true;
 		}
 		return false;

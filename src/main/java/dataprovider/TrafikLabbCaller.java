@@ -4,8 +4,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.Scanner;
 
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
+import org.json.JSONObject;
 
 class TrafikLabbCaller implements TrafikLabbComm {
 
@@ -33,9 +32,7 @@ class TrafikLabbCaller implements TrafikLabbComm {
 	public JSONObject fetchJourneyPatterns() {
 		try {
 			String response = fetchData();
-			JSONParser parser = new JSONParser();
-			JSONObject object = (JSONObject) parser.parse(response);
-			return object;
+			return new JSONObject(response);
 		}
 		catch (Exception e) {
 			System.out.println("Failed to fetch journey patterns");

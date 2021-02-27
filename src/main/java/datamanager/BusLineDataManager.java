@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import dataUtilisers.BusLineDataIf;
 import dataprovider.BusLineDataJSONParser;
 import dataprovider.BusLineDataProvider;
 import dataprovider.BusLineDataProvider.BusLineInformation;
@@ -16,8 +15,8 @@ import dataprovider.TrafikLabbComm;
 
 public final class BusLineDataManager implements BusLineDataIf {
 
-	private List<BusLineInformation> allBusLineData = new ArrayList<>();
-	private Map<String, BusLineInformation> allBusLineInfoPerLine;
+	private List<BusLineInformation> allLineInformation = new ArrayList<>();
+	private Map<String, BusLineInformation> informationByLineNumber;
 	private boolean isInitialised;
 
 	private BusLineDataProvider dataProvider;
@@ -34,36 +33,32 @@ public final class BusLineDataManager implements BusLineDataIf {
 	public void initAndFetchData() {
 		if (!isInitialised || dataProvider.isTimeToUpdate()) {
 
-			if (allBusLineInfoPerLine != null) {
-				allBusLineInfoPerLine.clear();
+			if (informationByLineNumber != null) {
+				informationByLineNumber.clear();
 			}
 
-			allBusLineInfoPerLine = dataProvider.getData();
-			if (allBusLineInfoPerLine != null && !allBusLineInfoPerLine.isEmpty()) {
-				allBusLineData.clear();
-				allBusLineData.addAll(allBusLineInfoPerLine.values());
-				allBusLineData.sort(new SortNumberOfPatternPointNumbersDesc());
-
-				totalNumberOfBusLines = allBusLineData.size();
+			informationByLineNumber = dataProvider.getData();
+			if (dataWasFound()) {
+				mapToInternalStrutures();
 				isInitialised = true;
 			}
 			else {
-				allBusLineInfoPerLine = new HashMap<>();
+				informationByLineNumber = new HashMap<>();
 			}
 		}
 	}
 
-	private List<BusLineInformation> getSubListOfTopLines(int numberOfItemsToReturn) {
-		if (numberOfItemsToReturn <  0) {
-			return new ArrayList<>();
-		}
+	private void mapToInternalStrutures() {
+		allLineInformation.clear();
+		allLineInformation.addAll(informationByLineNumber.values());
+		allLineInformation.sort(new SortNumberOfPatternPointNumbersDesc());
 
-		if (totalNumberOfBusLines <= numberOfItemsToReturn) {
-			return allBusLineData.subList(0, totalNumberOfBusLines);
-		}
-		else {
-			return allBusLineData.subList(0, numberOfItemsToReturn);
-		}
+		totalNumberOfBusLines = allLineInformation.size();
+	}
+
+	private boolean dataWasFound() {
+
+		return informationByLineNumber != null && !informationByLineNumber.isEmpty();
 	}
 
 	private void lateInit() {
@@ -74,16 +69,10 @@ public final class BusLineDataManager implements BusLineDataIf {
 
 	@Override
 	public List<String> getTop10BusLineWithMostStops() {
-
-		lateInit();
-
-		List<String> topTenLineNumbers = new ArrayList<>();
-		List<BusLineInformation> topTenList = getSubListOfTopLines(10);
-		if (topTenList == null) {
-			return new ArrayList<>();
-		}
-		topTenList.stream().forEach(p -> topTenLineNumbers.add(p.lineNumber));
-		return topTenLineNumbers;
+		return getBusLineWithMostStops(10)
+				.stream()
+				.map(line -> line.lineNumber)
+				.collect(Collectors.toList());
 	}
 
 	@Override
@@ -91,15 +80,15 @@ public final class BusLineDataManager implements BusLineDataIf {
 		lateInit();
 
 		List<BusLineInformation> topList = getSubListOfTopLines(pNumberOfItems);
-		if (topList == null) {
-			return new ArrayList<>();
-		}
+		return topList.stream()
+				.map(info -> createBusLineInfo(info))
+				.collect(Collectors.toList());
+	}
 
-		List<BusLineInfo> info = topList.stream()
-			.map(p -> createBusLineInfo(p))
-			.collect(Collectors.toList());
-
-		return info;
+	private List<BusLineInformation> getSubListOfTopLines(int numberOfItemsToReturn) {
+		return allLineInformation.stream()
+				.limit(Math.max(0, numberOfItemsToReturn))
+				.collect(Collectors.toList());
 	}
 
 	private BusLineInfo createBusLineInfo(BusLineInformation busLine) {
@@ -116,49 +105,46 @@ public final class BusLineDataManager implements BusLineDataIf {
 		return info;
 	}
 
-	@Override
-	public List<String> getAllBusStopsForBusLine(String lineNumber) {
 
-		//try catch here or in caller method??
-		lateInit();
+    @Override
+    public List<String> getAllBusStopsForBusLine(String lineNumber) {
 
-		BusLineInformation lineInfo = allBusLineInfoPerLine.get(lineNumber);
-		if (lineInfo == null) {
-			return new ArrayList<>();
-		}
+        lateInit();
 
-		Set<String> tAllBusStops = new HashSet<>();
-		tAllBusStops.addAll(lineInfo.busStopIdsDirection1);
-		tAllBusStops.addAll(lineInfo.busStopIdsDirection2);
+        List<String> returnList = new ArrayList<>();
 
-		return new ArrayList<>(tAllBusStops);
-	}
+        BusLineInformation lineInfo = informationByLineNumber.get(lineNumber);
+        if (lineInfo == null) {
+            return returnList;
+        }
 
-	@Override
-	public List<String> getAllBusStopsForBusLine(String lineNumber, String direction) {
-		lateInit();
+        Set<String> tAllBusStops = new HashSet<>();
+        tAllBusStops.addAll(lineInfo.busStopIdsDirection1);
+        tAllBusStops.addAll(lineInfo.busStopIdsDirection2);
+        returnList.addAll(tAllBusStops);
 
-		BusLineInformation lineInfo = allBusLineInfoPerLine.get(lineNumber);
-		if (lineInfo == null) {
-			return new ArrayList<>();
-		}
+        return returnList;
+    }
 
-		Set<String> tAllBusStops = new HashSet<>();
-		if (direction.equals(BusLineDataJSONParser.cDirectionCode1)) {
-			tAllBusStops.addAll(lineInfo.busStopIdsDirection1);
-		}
-		else {
-			tAllBusStops.addAll(lineInfo.busStopIdsDirection2);
-		}
+    @Override
+    public List<String> getAllBusStopsForBusLine(String lineNumber, String direction) {
+        lateInit();
 
-		return new ArrayList<>(tAllBusStops);
-	}
+        List<String> returnList = new ArrayList<>();
+        BusLineInformation lineInfo = informationByLineNumber.get(lineNumber);
+        if (lineInfo == null) {
+            return returnList;
+        }
+
+        returnList.addAll(BusLineDataProvider.DIRECTION1.equals(direction) ?
+        		lineInfo.busStopIdsDirection1 : lineInfo.busStopIdsDirection2);
+
+        return returnList;
+    }
 
 	@Override
 	public long getTotalNumberOfBusLines() {
 		return totalNumberOfBusLines;
 	}
-
-
 
 }

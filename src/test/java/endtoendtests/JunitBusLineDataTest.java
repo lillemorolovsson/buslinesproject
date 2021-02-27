@@ -1,22 +1,19 @@
 package endtoendtests;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
-import dataUtilisers.BusLineDataIf.BusLineInfo;
 import datamanager.BusLineDataManager;
+import datamanager.BusLineDataIf.BusLineInfo;
 import dataprovider.TrafikLabbComm;
 import endtoendtests.TestDataCreator.EmptyTestData;
 import endtoendtests.TestDataCreator.FetchExternalTestData;
 import endtoendtests.TestDataCreator.FetchTestData;
-
 
 public class JunitBusLineDataTest {
 
@@ -24,11 +21,6 @@ public class JunitBusLineDataTest {
 
 	public void setUpTestData() {
 		setUpTestData(new FetchTestData());
-	}
-
-	private void setUpProdTestData() {
-		manager = new BusLineDataManager();
-		manager.initAndFetchData();
 	}
 
 	public void setUpTestData(TrafikLabbComm externalProvider) {
@@ -45,6 +37,10 @@ public class JunitBusLineDataTest {
 		Assert.assertNotNull("Null was not expected", list);
 		Assert.assertEquals("Unexpected number of lines returned", 0, list.size());
 
+		list = manager.getAllBusStopsForBusLine(null);
+		Assert.assertNotNull("Null was not expected", list);
+		Assert.assertEquals("Unexpected number of lines returned", 0, list.size());
+
 		List<BusLineInfo> lines = manager.getBusLineWithMostStops(-1);
 		Assert.assertNotNull("Null was not expected", lines);
 		Assert.assertEquals("Unexpected number of lines returned", 0, lines.size());
@@ -57,6 +53,9 @@ public class JunitBusLineDataTest {
 		Assert.assertNotNull("Null was not expected", lines);
 		Assert.assertEquals("Unexpected number of lines returned", 0, list.size());
 
+		list = manager.getAllBusStopsForBusLine(null,  null);
+		Assert.assertNotNull("Null was not expected", lines);
+		Assert.assertEquals("Unexpected number of lines returned", 0, list.size());
 
 	}
 
@@ -155,68 +154,9 @@ public class JunitBusLineDataTest {
 	}
 
 	@Test
-    @Ignore("Ignored by default: Only run toward live data when you really want to")
-	public void verifyWithFullExternalData() {
-
-		setUpProdTestData();
-
-		System.out.println("TOTAL NUMBER OF LINES");
-		long numberOfLines = manager.getTotalNumberOfBusLines();
-		System.out.println(" == " + numberOfLines);
-		System.out.println();
-		System.out.println("___________________________________________________________");
-
-		int xLines = 20;
-		List<BusLineInfo> topElevenLines = manager.getBusLineWithMostStops(xLines);
-
-		System.out.println("TOP X LINES");
-		for (BusLineInfo line : topElevenLines) {
-			System.out.println(String.format("%20.20s %10d %2.2s",
-					line.lineNumber, line.numberOfStops, line.direction));
-		}
-		System.out.println("___________________________________________________________");
-
-		List<String> top10Lines = manager.getTop10BusLineWithMostStops();
-
-		System.out.println("TOP TEN LINES");
-		for (String line : top10Lines) {
-			System.out.print(line + " | ");
-		}
-		System.out.println();
-		System.out.println("___________________________________________________________");
-
-
-		System.out.println("BUS STOPS PER LINE AND DIRECTION");
-		for (BusLineInfo line : topElevenLines) {
-			List<String> busStops = manager.getAllBusStopsForBusLine(line.lineNumber, line.direction);
-			System.out.print(line.lineNumber + "-> " +  busStops.size() + ": ");
-			for (String stop : busStops) {
-				System.out.print(String.format("%7.7s |", stop));
-			}
-			System.out.println();
-		}
-		System.out.println("___________________________________________________________");
-
-
-		System.out.println("ALL BUS STOPS PER LINE");
-		for (BusLineInfo line : topElevenLines) {
-			List<String> busStops = manager.getAllBusStopsForBusLine(line.lineNumber);
-			System.out.print(line.lineNumber + "-> " +  busStops.size() + ": ");
-			for (String stop : busStops) {
-				System.out.print(String.format("%7.7s |", stop));
-			}
-			System.out.println();
-		}
-		System.out.println("___________________________________________________________");
-
-	}
-
-	@Test
 	public void verifyNumberOfBusStops() {
 
 		setUpTestData(new FetchTestData());
-
-		// List.of()
 
 		Map<String, List<String>> expectedRows = new HashMap<>();
 
@@ -251,8 +191,7 @@ public class JunitBusLineDataTest {
 	public void verifyTop10BusLinesWithMostStops() {
 		setUpTestData(new FetchTestData());
 
-		//95, 55, 655, 75, 66, 23, 25, 35, 45, 355
-		List<String> expectedTopLines = new ArrayList<>( List.of("55", "95", "23", "655", "66", "75", "25", "35","355", "45"));
+		List<String> expectedTopLines = List.of("55", "95", "23", "655", "66", "75", "25", "35","355", "45");
 
 		List<String> lines = manager.getTop10BusLineWithMostStops();
 		Assert.assertEquals("Unexpected number of lines returned", expectedTopLines.size(), lines.size());

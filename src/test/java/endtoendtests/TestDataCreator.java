@@ -8,9 +8,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import dataprovider.TrafikLabbComm;
 
@@ -36,8 +35,7 @@ public class TestDataCreator {
 		public JSONObject fetchJourneyPatterns() {
 			String data = externalTestData;
 			try {
-				JSONParser parser = new JSONParser();
-				mDataObject = (JSONObject) parser.parse(data);
+				return new JSONObject(data);
 			} catch (Exception e) {
 				System.out.println("Parsing of external test data failed");
 				e.printStackTrace();
@@ -49,8 +47,7 @@ public class TestDataCreator {
 
 			String data = externalTestData;
 			try {
-				JSONParser parser = new JSONParser();
-				mDataObject = (JSONObject) parser.parse(data);
+				return new JSONObject(data);
 			} catch (Exception e) {
 				System.out.println("Parsing of external test data failed");
 				e.printStackTrace();
@@ -108,7 +105,8 @@ public class TestDataCreator {
 				obj.put(TrafikLabbComm.JOUR_POINT_NUMBER, result.journeyPatternPointNumber + "");
 				obj.put(TrafikLabbComm.LAST_MODIFIED, result.lastModified);
 				obj.put(TrafikLabbComm.EXISTS_FROM_DATE, result.existsFromDate);
-				tReturnList.add(obj);
+
+				tReturnList.put(obj);
 			}
 
 			return tReturnList;

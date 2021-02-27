@@ -3,9 +3,12 @@ package dataprovider;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import org.json.simple.JSONObject;
+import org.json.JSONObject;
 
 public interface TrafikLabbComm {
+
+	public static final String DIRECTION_CODE_1 = "1";
+	public static final String DIRECTION_CODE_2 = "2";
 
 	public static class DataModelType {
 		public static final String SITE = "site";

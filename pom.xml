@@ -11,20 +11,15 @@
         <maven.compiler.target>11</maven.compiler.target>
     </properties>
     <dependencies>
-        <dependency>
-            <groupId>com.googlecode.soundlibs</groupId>
-            <artifactId>basicplayer</artifactId>
-            <version>3.0.0.0</version>
-        </dependency>
-    	<dependency>
-		   	<groupId>com.googlecode.json-simple</groupId>
-			<artifactId>json-simple</artifactId>
-	        <version>1.1.1</version>        
-	    </dependency>
-        <dependency>
-		  <groupId>com.squareup.okhttp3</groupId>
-		  <artifactId>okhttp</artifactId>
-		  <version>4.9.0</version>
-		</dependency>
+	<dependency>
+		<groupId>org.json</groupId>
+		<artifactId>json</artifactId>
+		<version>20180130</version>
+	</dependency>
+	<dependency>
+		<groupId>junit</groupId>
+		<artifactId>junit</artifactId>
+		<version>4.10</version>
+	</dependency>
     </dependencies>
 </project>
