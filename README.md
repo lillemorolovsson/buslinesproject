@@ -2,6 +2,9 @@
 
 Test program for retrieving data from TrafikLabb's _SL Hållplatser och Linjer 2_ API. 
 
+Go to https://www.trafiklab.se/ and register as a user. Create a project that uses _SL Hållplatser och Linjer 2_, 
+and create a key for the project. Add that key to _TrafikLabbCaller.JOUR_KEY_.
+
 Create a new instance of class _BusLineDataManager_ and call it's methods. 
 An empty constructor call will access TrafikLabbs API, but it is also possible to send in one's own 
 implementation of _TrafikLabComm_ to run towards alternativ data, for e.g. test purposes. 

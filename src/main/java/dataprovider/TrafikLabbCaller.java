@@ -8,7 +8,7 @@ import org.json.JSONObject;
 
 class TrafikLabbCaller implements TrafikLabbComm {
 
-	private static final String JOUR_KEY = "ad4d2aaeb67b4f5b836bac7d0ca34dc9";
+	private static final String JOUR_KEY = "xxxxxxxxxxxxxx";
 	private static final String JOUR_URL = "https://api.sl.se/api2/LineData.json?"
 	 		+ "model=JourneyPatternPointOnLine&"
 	  		+ "key=" + JOUR_KEY
